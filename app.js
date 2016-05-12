@@ -186,9 +186,9 @@ Game.prototype.resize = function()
 	this.canvas.width = window.innerWidth;
 	this.canvas.height = window.innerHeight;
 	
-	var factor = this.canvas.width / (6 * spacing);
+	var factor = this.canvas.width / (7 * spacing);
 	this.ctx.scale(factor, factor);
-	this.ctx.translate(spacing/2, -1.65*spacing*this.canvas.width/this.canvas.height);
+	this.ctx.translate(spacing, -1.65*spacing*this.canvas.width/this.canvas.height);
 };
 
 Game.prototype.spin = function()
