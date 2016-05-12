@@ -124,7 +124,7 @@ function Game()
 		{
 			this.reels[i][j] = new Symbol(j, spacing * i, spacing * j, i);
 		}
-		//shuffle(this.reels[i]);
+		shuffle(this.reels[i]);
 	}
 	
 	var imagesrc = this.imagesrc;
