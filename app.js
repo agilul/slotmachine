@@ -330,4 +330,5 @@ function update(timestamp)
 
 var game = new Game();
 window.addEventListener("resize", resize, false);
+window.addEventListener("orientationchange", resize, false);
 window.requestAnimationFrame(update);
