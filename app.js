@@ -138,6 +138,18 @@ function Game()
 	
 	this.lines = [];
 	this.scoreText = "";
+	
+	this.music = new Audio("sounds/musicbox.ogg");
+	this.music.volume = 0.5;
+	this.music.load();
+	
+	this.reelstop = new Audio("sounds/reelstop.wav");
+	this.reelstop.volume = 0.8;
+	this.reelstop.load();
+	
+	this.winning = new Audio("sounds/winning.wav");
+	this.winning.volume = 1;
+	this.winning.load();
 }
 
 Game.prototype.update = function(timestamp)
@@ -198,10 +210,12 @@ Game.prototype.resize = function()
 Game.prototype.spin = function()
 {
 	if (this.canSpin)
-	{
+	{	
 		this.lines = [];
 		this.scoreText = "";
 		this.canSpin = false;
+		
+		this.music.play();
 		
 		for (var i = 0; i < this.reels.length; i++)
 		{
@@ -237,12 +251,17 @@ Game.prototype.stopReel = function(index)
 		this.reels[index][i].stop();
 	}
 	
+	this.reelstop.play();
+	
 	if (index < 4)
 	{
 		this.results[1][index+1].choose(1.0);
 	}
 	else
 	{
+		this.music.pause();
+		this.music.currentTime = 0;
+		
 		var score = 0;
 		
 		for (var i = 0; i < this.paylines.length; i++)
@@ -282,6 +301,8 @@ Game.prototype.stopReel = function(index)
 		}
 		
 		this.scoreText = "" + score;
+		
+		if (score > 0) this.winning.play();
 		
 		this.canSpin = true;
 		
