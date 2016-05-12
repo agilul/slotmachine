@@ -137,6 +137,7 @@ function Game()
 		this.results[i] = [];
 	
 	this.lines = [];
+	this.scoreText = "";
 }
 
 Game.prototype.update = function(timestamp)
@@ -179,6 +180,9 @@ Game.prototype.draw = function()
 		}
 		this.ctx.stroke();
 	}
+	
+	this.ctx.font = "italic 10pt Calibri";
+	this.ctx.fillText(this.scoreText, spacing * 5 + 10, 3* spacing + 10);
 };
 
 Game.prototype.resize = function()
@@ -196,6 +200,7 @@ Game.prototype.spin = function()
 	if (this.canSpin)
 	{
 		this.lines = [];
+		this.scoreText = "";
 		this.canSpin = false;
 		
 		for (var i = 0; i < this.reels.length; i++)
@@ -276,7 +281,7 @@ Game.prototype.stopReel = function(index)
 			}
 		}
 		
-		console.log(score);
+		this.scoreText = "" + score;
 		
 		this.canSpin = true;
 		
