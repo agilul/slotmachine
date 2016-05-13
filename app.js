@@ -1,20 +1,21 @@
-var scale = 50;
-var spacing = 53;
+var scale = 50;		// symbols size
+var spacing = 53;	// symbols size + space between
 
 function Symbol(type, x, y, reel)
 {
-	this.type = type;
-	this.x = x;
-	this.y = y;
-	this.reel = reel;
-	this.speed = 0;
-	this.chosen = false;
-	this.minTime = 0.0;
-	this.interval = 0.0;
-	this.finalPos = 0;
-	this.lastPos = 0;
+	this.type = type;		// each type has a different image
+	this.x = x;				// x position
+	this.y = y;				// y position
+	this.reel = reel;		// which reel the symbol belong to
+	this.speed = 0;			// s = v*t
+	this.chosen = false;	// was it chosen by RNG?
+	this.minTime = 0.0;		// minimum time spent spinning
+	this.interval = 0.0;	// time counter
+	this.finalPos = 0;		// where it should be after spinning
+	this.lastPos = 0;		// position in previous frame
 }
 
+// called once per frame, before drawing on screen
 Symbol.prototype.update = function(dt)
 {
 	if (this.speed > 0)
@@ -22,31 +23,35 @@ Symbol.prototype.update = function(dt)
 		this.interval += dt;
 		if (this.interval > this.minTime)
 		{
+			// stop only if it has just passed finalPos
 			if (this.chosen && this.y >= spacing * this.finalPos && this.lastPos < spacing * this.finalPos)
 			{
 				this.chosen = false;
 				this.stop();
-				game.stopReel(this.reel);
+				game.stopReel(this.reel); // stop everything in same reel
 			}
 		}
 		this.lastPos = this.y;
 			
 		this.y += this.speed * dt;
-		if (this.y > spacing * 10) this.y -= spacing * 10;
+		if (this.y > spacing * 10) this.y -= spacing * 10; // wrapping
 	}
 }
 
+// draw on screen
 Symbol.prototype.draw = function(context)
 {
 	context.drawImage(this.img, this.x, this.y, scale, scale);
 };
 
+// load the corresponding image based on type
 Symbol.prototype.setImage = function(imagesrc)
 {
 	this.img = new Image();
 	this.img.src = imagesrc[this.type];
 };
 
+// notify that it is the chosen one
 Symbol.prototype.choose = function(time)
 {
 	this.chosen = true;
@@ -54,6 +59,7 @@ Symbol.prototype.choose = function(time)
 	this.interval = 0.0;
 };
 
+// stop spinning and adjust position
 Symbol.prototype.stop = function()
 {
 	this.speed = 0;
@@ -68,12 +74,12 @@ function Game()
 	this.canvas.addEventListener("touchstart", spin, false);
 	this.ctx = this.canvas.getContext("2d");
 	document.body.appendChild(this.canvas);
-	this.resize();
+	this.resize(); // resize the canvas and all the elements inside
 	
-	this.lastTS = 0;
-	this.canSpin = true;
+	this.lastTS = 0;		// previous timestamp
+	this.canSpin = true;	// stops spin commands
 	
-	this.imagesrc = [
+	this.imagesrc = [		// images sources
 		"images/elephant.png",
 		"images/giraffe.png",
 		"images/hippo.png",
@@ -86,9 +92,9 @@ function Game()
 		"images/snake.png",
 	];
 	
-	this.jolly = 5;
+	this.jolly = 5; 	// this symbol can substitute any other one (parrot)
 	
-	this.paylines = [
+	this.paylines = [	// 25 winning lines
 		[ 1, 1, 1, 1, 1 ],
         [ 0, 0, 0, 0, 0 ],
         [ 2, 2, 2, 2, 2 ],
@@ -124,34 +130,37 @@ function Game()
 		{
 			this.reels[i][j] = new Symbol(j, spacing * i, spacing * j, i);
 		}
-		shuffle(this.reels[i]);
+		shuffle(this.reels[i]); // randomizes order
 	}
 	
+	// loading images
 	var imagesrc = this.imagesrc;
 	iterate(this.reels, function(symbol){
 		symbol.setImage(imagesrc);
 	});
 	
+	// this will store the symbols used to calculate the results (3x5)
 	this.results = [];
 	for (var i = 0; i < 3; i++)
 		this.results[i] = [];
 	
-	this.lines = [];
-	this.scoreText = "";
+	this.lines = [];		// winning lines highlighter
+	this.scoreText = "";	// to show the score after the spin
 	
-	this.music = new Audio("sounds/musicbox.ogg");
+	this.music = new Audio("sounds/musicbox.ogg");		// music that will run while spinning
 	this.music.volume = 0.5;
 	this.music.load();
 	
-	this.reelstop = new Audio("sounds/reelstop.wav");
+	this.reelstop = new Audio("sounds/reelstop.wav");	// sound effect when a reel stops
 	this.reelstop.volume = 0.8;
 	this.reelstop.load();
 	
-	this.winning = new Audio("sounds/winning.wav");
+	this.winning = new Audio("sounds/winning.wav");		// sound effect when winning
 	this.winning.volume = 1;
 	this.winning.load();
 }
 
+// called once per frame
 Game.prototype.update = function(timestamp)
 {
 	if (this.lastTS == 0)
@@ -160,6 +169,7 @@ Game.prototype.update = function(timestamp)
 		return;
 	}
 	
+	// delta time
 	var dt = (timestamp - this.lastTS) / 1000.0;
 	this.lastTS = timestamp;
 	
@@ -168,8 +178,10 @@ Game.prototype.update = function(timestamp)
 	});
 };
 
+// draw stuff on screen
 Game.prototype.draw = function()
 {
+	// clear the screen before drawing
 	this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	
 	var ctx = this.ctx;
@@ -177,6 +189,7 @@ Game.prototype.draw = function()
 		symbol.draw(ctx);
 	});
 	
+	// drawing winning lines (if any)
 	this.ctx.lineWidth = 10;
 	this.ctx.strokeStyle = "rgba(0, 255, 255, 0.7)";
 	this.ctx.lineCap = "round";
@@ -193,20 +206,25 @@ Game.prototype.draw = function()
 		this.ctx.stroke();
 	}
 	
+	// drawing score text
 	this.ctx.font = "italic 10pt Calibri";
 	this.ctx.fillText(this.scoreText, spacing * 5 + 10, 3* spacing + 10);
 };
 
+// resizes the canvas and everything in it
 Game.prototype.resize = function()
 {
+	// as big as the window
 	this.canvas.width = window.innerWidth;
 	this.canvas.height = window.innerHeight;
 	
+	// scale and translate to only show the 3 rows used for the results
 	var factor = this.canvas.height / (4 * spacing);
 	this.ctx.scale(factor, factor);
 	this.ctx.translate(spacing-scale, -2.5*spacing);
 };
 
+// starts a spin round
 Game.prototype.spin = function()
 {
 	if (this.canSpin)
@@ -219,6 +237,7 @@ Game.prototype.spin = function()
 		
 		for (var i = 0; i < this.reels.length; i++)
 		{
+			// pick the top one
 			var random = Math.floor(Math.random() * 10);
 			
 			for (var j = 0; j < this.reels[i].length; j++)
@@ -226,16 +245,19 @@ Game.prototype.spin = function()
 				var position = j - random;
 				position = position.mod(10);
 				
+				// stores the results
 				if (position >= 0 && position <= 2)
 				{
 					this.results[position][i] = this.reels[i][j];
 				}
 				
+				// set stop position and make them spin
 				this.reels[i][j].finalPos = (position + 3).mod(10);
 				this.reels[i][j].speed = 500;
 				
 				if (position == 1 && i == 0)
 				{
+					// the chosen one will notify the others to stop too
 					this.reels[i][j].choose(1.0);
 				}
 				
@@ -244,6 +266,7 @@ Game.prototype.spin = function()
 	}
 };
 
+// stops a single reel
 Game.prototype.stopReel = function(index)
 {
 	for (var i = 0; i < this.reels[index].length; i++)
@@ -253,12 +276,15 @@ Game.prototype.stopReel = function(index)
 	
 	this.reelstop.play();
 	
+	// there are reels still spinning
 	if (index < 4)
 	{
 		this.results[1][index+1].choose(1.0);
 	}
+	// last reel stopped, check the results
 	else
 	{
+		// effectively stops a soundtrack
 		this.music.pause();
 		this.music.currentTime = 0;
 		
@@ -266,6 +292,7 @@ Game.prototype.stopReel = function(index)
 		
 		for (var i = 0; i < this.paylines.length; i++)
 		{
+			// checks how many symbols are in the correct position and correct order
 			var symbol = this.results[this.paylines[i][0]][0];
 			var j = 1;
 			for (; j < this.paylines[i].length; j++)
@@ -283,6 +310,7 @@ Game.prototype.stopReel = function(index)
 				}
 			}
 			
+			// if 3 or more, draw a line and increase score
 			if (j >= 3)
 			{
 				var line = [];
@@ -309,12 +337,13 @@ Game.prototype.stopReel = function(index)
 	}
 };
 
-
+// modulo operator
 Number.prototype.mod = function(n)
 {
 	return ((this % n) + n) % n;
 }
 
+// Fisher-Yates shuffling algorithm
 function shuffle(arr)
 {
 	for (var i = arr.length - 1; i > 0; i--)
@@ -326,6 +355,7 @@ function shuffle(arr)
 	}
 }
 
+// executes a function on each member of a 2d array
 function iterate(arr, func)
 {
 	for (var i = 0; i < arr.length; i++)
